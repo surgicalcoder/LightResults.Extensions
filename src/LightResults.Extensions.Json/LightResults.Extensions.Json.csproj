@@ -36,16 +36,16 @@
     <!-- Package -->
     <PropertyGroup>
         <IsPackable>true</IsPackable>
-        <PackageId>LightResults.Extensions.Json</PackageId>
-        <Title>LightResults.Extensions.Json</Title>
-        <Description>System.Text.Json converters for LightResults.</Description>
+        <PackageId>GoLive.LightResults.Extensions.Json</PackageId>
+        <Title>GoLive.LightResults.Extensions.Json</Title>
+        <Description>System.Text.Json converters for LightResults with working Deserialization.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageProjectUrl>https://github.com/jscarle/LightResults.Extensions</PackageProjectUrl>
         <PackageTags>result results pattern lightresults system-text-json json-converter</PackageTags>
         <RepositoryUrl>https://github.com/jscarle/LightResults.Extensions</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <Authors>Jean-Sebastien Carle</Authors>
-        <Copyright>Copyright © Jean-Sebastien Carle 2024</Copyright>
+        <Authors>Jean-Sebastien Carle, SurgicalCoder</Authors>
+        <Copyright>Copyright © Jean-Sebastien Carle 2024, SurgicalCoder 2025</Copyright>
         <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
         <PackageIcon>Icon.png</PackageIcon>
         <IncludeSymbols>true</IncludeSymbols>

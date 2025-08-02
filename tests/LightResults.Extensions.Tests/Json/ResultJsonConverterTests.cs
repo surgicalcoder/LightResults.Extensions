@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using LightResults.Extensions.Json;
 using Shouldly;
 using Xunit;
@@ -14,6 +14,73 @@ public sealed class ResultJsonConverterTests
             new ResultJsonConverterFactory(),
         },
     };
+
+    [Fact]
+    public void FailreSerializeDeserializeErrorMessage()
+    {
+        // Arrange
+        var result = Result.Failure<string>("This is a failure");
+
+        // Act
+        var json = JsonSerializer.Serialize(result, Options);
+
+        var deserializedResult = JsonSerializer.Deserialize<Result<string>>(json, Options);
+
+
+        var messages = deserializedResult.Errors.FirstOrDefault();
+
+        messages.Message.ShouldBe("This is a failure");
+    }
+
+
+    [Fact]
+    public void SuccessResultSerializeDeserializeWithMessage()
+    {
+        // Arrange
+        var result = Result.Success<string>("This is a success");
+
+        // Act
+        var json = JsonSerializer.Serialize(result, Options);
+
+        var deserializedResult = JsonSerializer.Deserialize<Result<string>>(json, Options);
+
+        var isSuccessResult = deserializedResult.IsSuccess(out string val);
+        // Assert
+        val.ShouldBe("This is a success");
+    }
+
+
+    [Fact]
+    public void SuccessResultSerializeDeserialize()
+    {
+        // Arrange
+        var result = Result.Success();
+
+        // Act
+        var json = JsonSerializer.Serialize(result, Options);
+
+        var deserializedResult = JsonSerializer.Deserialize<Result>(json, Options);
+
+        // Assert
+        deserializedResult.IsSuccess().ShouldBe(true);
+        deserializedResult.IsFailure().ShouldBe(false);
+    }
+
+    [Fact]
+    public void FailureResultSerializeDeserialize()
+    {
+        // Arrange
+        var result = Result.Failure();
+
+        // Act
+        var json = JsonSerializer.Serialize(result, Options);
+
+        var deserializedResult = JsonSerializer.Deserialize<Result>(json, Options);
+
+        // Assert
+        deserializedResult.IsFailure().ShouldBe(true);
+        deserializedResult.IsSuccess().ShouldBe(false);
+    }
 
     [Fact]
     public void SuccessResult()

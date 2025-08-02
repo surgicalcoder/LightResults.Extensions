@@ -31,7 +31,112 @@ public sealed class ResultJsonConverter<TValue> : JsonConverter<Result<TValue>>
     /// <exception cref="NotImplementedException">Thrown when the method is called as it's not implemented.</exception>
     public override Result<TValue> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        throw new NotImplementedException("Converter does not support deserialization as Result types cannot be reliably deserialized without losing data.");
+        if (reader.TokenType != JsonTokenType.StartObject)
+            throw new JsonException("Expected StartObject token");
+
+        bool? isSuccess = null;
+        TValue? value = default;
+        List<IError>? errors = null;
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject)
+                break;
+
+            if (reader.TokenType != JsonTokenType.PropertyName)
+                throw new JsonException("Expected PropertyName token");
+
+            string propertyName = reader.GetString()!;
+            reader.Read();
+
+            switch (propertyName)
+            {
+                case IsSuccess:
+                    isSuccess = reader.GetBoolean();
+                    break;
+                case Value:
+                    value = JsonSerializer.Deserialize<TValue>(ref reader, options);
+                    break;
+                case Errors:
+                    errors = new List<IError>();
+                    if (reader.TokenType == JsonTokenType.StartArray)
+                    {
+                        while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                        {
+                            errors.Add(ReadError(ref reader, options));
+                        }
+                    }
+                    break;
+            }
+        }
+
+        if (isSuccess == null)
+            throw new JsonException("Missing IsSuccess property");
+
+        if (isSuccess.Value)
+            return Result.Success(value!);
+        else
+            return Result.Failure<TValue>(errors ?? new List<IError>());
+    }
+
+    private static IError ReadError(ref Utf8JsonReader reader, JsonSerializerOptions options)
+    {
+        string? message = null;
+        Dictionary<string, object?> metadata = new();
+
+        if (reader.TokenType != JsonTokenType.StartObject)
+            throw new JsonException("Expected StartObject token for error");
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject)
+                break;
+
+            if (reader.TokenType != JsonTokenType.PropertyName)
+                throw new JsonException("Expected PropertyName token in error object");
+
+            string propertyName = reader.GetString()!;
+            reader.Read();
+
+            switch (propertyName)
+            {
+                case Message:
+                    message = reader.GetString();
+                    break;
+                case Metadata:
+                    if (reader.TokenType == JsonTokenType.StartObject)
+                    {
+                        while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+                        {
+                            if (reader.TokenType == JsonTokenType.PropertyName)
+                            {
+                                string key = reader.GetString()!;
+                                reader.Read();
+                                metadata[key] = JsonSerializer.Deserialize<object?>(ref reader, options);
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        if (message == null)
+            throw new JsonException("Missing Message property in error object");
+
+        var errorType = Type.GetType("LightResults.Error") ?? typeof(BasicError);
+        return (IError)Activator.CreateInstance(errorType, message, metadata)!;
+    }
+
+    private class BasicError : IError
+    {
+        public string Message { get; }
+        public IReadOnlyDictionary<string, object?> Metadata { get; }
+        public Exception? Exception => null;
+        public BasicError(string message, Dictionary<string, object?>? metadata = null)
+        {
+            Message = message;
+            Metadata = metadata ?? new Dictionary<string, object?>();
+        }
     }
 
     /// <summary>Writes a <see cref="Result"/> object to JSON.</summary>
