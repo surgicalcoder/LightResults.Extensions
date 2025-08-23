@@ -58,9 +58,10 @@ public sealed class ResultJsonConverter<TValue> : JsonConverter<Result<TValue>>
                     value = JsonSerializer.Deserialize<TValue>(ref reader, options);
                     break;
                 case Errors:
-                    errors = new List<IError>();
-                    if (reader.TokenType == JsonTokenType.StartArray)
+                    // Only read errors if isSuccess is explicitly false
+                    if (isSuccess == false && reader.TokenType == JsonTokenType.StartArray)
                     {
+                        errors = new List<IError>();
                         while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
                         {
                             errors.Add(ReadError(ref reader, options));
@@ -74,7 +75,7 @@ public sealed class ResultJsonConverter<TValue> : JsonConverter<Result<TValue>>
             throw new JsonException("Missing IsSuccess property");
 
         if (isSuccess.Value)
-            return Result.Success(value!);
+            return Result.Success(value!); // Always return success, even if value is null/default
         else
             return Result.Failure<TValue>(errors ?? new List<IError>());
     }

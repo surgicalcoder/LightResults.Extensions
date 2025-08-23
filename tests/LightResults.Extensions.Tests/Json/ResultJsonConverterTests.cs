@@ -47,6 +47,7 @@ public sealed class ResultJsonConverterTests
         var isSuccessResult = deserializedResult.IsSuccess(out string val);
         // Assert
         val.ShouldBe("This is a success");
+        deserializedResult.Errors.Count.ShouldBe(0);
     }
 
 

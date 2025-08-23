@@ -52,13 +52,14 @@ public sealed class ResultJsonConverter : JsonConverter<Result>
                     isSuccess = reader.GetBoolean();
                     break;
                 case Errors:
-                    errors = new List<IError>();
                     if (reader.TokenType == JsonTokenType.StartArray)
                     {
+                        var errorList = new List<IError>();
                         while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
                         {
-                            errors.Add(ReadError(ref reader, options));
+                            errorList.Add(ReadError(ref reader, options));
                         }
+                        errors = errorList.Count > 0 ? errorList : null;
                     }
                     break;
             }
